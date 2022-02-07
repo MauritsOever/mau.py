@@ -6,6 +6,15 @@ Created on Mon Jan 31 15:57:00 2022
 
 @author: MauritsOever
 https://github.com/MauritsOever
+
+liskov substitution principle
+child parent classes - python inheritance
+only need to import packages once in a class
+docker
+google cloud
+container - virtual machine
+getters and setters
+data engineering
 """
 
 # start this file with creating a class
@@ -46,11 +55,14 @@ def Yahoo(list_of_ticks, startdate, enddate, retsorclose = 'rets'):
 class OLS:
     def __init__(self, vY, mX, const = 'yes'):
         import numpy as np
+        self.variable_names = list(mX.columns)
         self.Y = np.array(vY)
         if const == 'yes':
+            self.const = 'yes'
             self.X = np.ones((len(mX), len(mX.columns)+1))
             self.X[:, 1:] = mX
         else:
+            self.const = 'no'
             self.X = np.array(mX)
             
     def fit(self):
@@ -93,7 +105,7 @@ class OLS:
 
         Returns
         -------
-        matrix of standard errors
+        vector of standard errors
 
         """
         import numpy as np
@@ -102,6 +114,51 @@ class OLS:
         self.SE_OLS = np.sqrt(np.diag(self.dSigmaHat * np.linalg.inv(self.X.T@self.X)))
         
         return self.SE_OLS
+    
+    def desc(self):
+        """
+        Takes no argument, this function gives all OLS related output.
+        Includes beta estimates, standard errors, significance and top ten funny shrek moments (you won't believe number 1!)
+
+        Returns
+        -------
+        None.
+
+        todo:
+            - make table and put in ests, s.e.'s and tstats
+            - R squared, n of obs, 
+        """
+        import numpy as np
+        import pandas as pd
+        
+        try:
+            table = np.array([self.vbeta, 
+                              self.SE_OLS, 
+                              self.vbeta/self.SE_OLS])
+        except: 
+            self.fit()
+            self.predict()
+            self.standard_errors()
+            table = np.array([self.vbeta, self.SE_OLS, self.vbeta/self.SE_OLS])
+
+        table = pd.DataFrame(table)
+        
+        if self.const == 'yes':
+            list_of_cols = ['const']
+        else:
+            list_of_cols = []
+        
+        list_of_cols = list_of_cols + self.variable_names
+        table.columns = list_of_cols
+        table.index = ['ests', 's.e.', 'tstat']
+        
+        #R_squared = 
+        print(table)
+        
+        
+        return table
+        
+        
 
 #%% testing the code below...
 
@@ -117,8 +174,10 @@ test = Yahoo(list_of_ticks, startdate, enddate, 'close')
 vY = test.iloc[1:,0]
 mX = test.iloc[1:,1:]
 
+#model = OLS(vY, mX, 'yes')
 model = OLS(vY, mX, 'yes')
 model.fit()
 model.standard_errors()
+table_test = model.desc()
 
 
